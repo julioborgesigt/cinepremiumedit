@@ -2,13 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <!-- Meta viewport para responsividade -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CinePremium Edit</title>
   <style>
+    /* Estilos globais */
     body {
       background: url("/cinepremium2.png") no-repeat center center fixed;
       background-size: cover;
       font-family: Arial, sans-serif;
-      
       margin: 20px;
     }
     .container {
@@ -19,50 +21,45 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       min-height: 1000px;
+      position: relative;
     }
-        /* Cabeçalho normal */
+    /* Cabeçalho normal */
     #cabeçalho img {
       width: 100%;
       display: block;
       border-radius: 10px;
     }
-
-    /* Cabeçalho redondo */
+    /* Cabeçalho redondo (sobreposto) */
     #cabeçalhoredondo {
-      /* Faz o elemento subir 100px sobre o conteúdo abaixo */
-      position: relative;
-      top: 180px;        /* Desloca para cima */
-      margin-bottom: -80px; /* Evita “buraco” no layout; ajuste conforme quiser */
-      z-index: 2;         /* Garante que fique acima dos produtos */
-      text-align: center; /* Para centralizar o img */
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 160px; /* Ajuste conforme o efeito desejado */
+      z-index: 2;
+      text-align: center;
     }
     #cabeçalhoredondo img {
       width: 100px;
       height: 100px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid #fff; /* Opcional: borda branca */
+      border: 2px solid #fff;
     }
-
-
-
-
     h1, h2, h3 {
       text-align: center;
+      color: #fff;
     }
     /* Grid de produtos */
     .product-grid {
       padding: 30px;
       display: flex;
       margin-top: 80px;
-    
       flex-wrap: wrap;
       gap: 20px;
       justify-content: center;
     }
     .product-card {
       width: 200px;
-      height: auto;
       border: 1px solid #7a7a7a;
       border-radius: 8px;
       background: #4e4e4e;
@@ -97,7 +94,7 @@
     .button:hover:not(:disabled) {
       background: #872bf1;
     }
-    /* Área de compra / checkout */
+    /* Área de checkout */
     .purchase-container {
       display: none;
       margin-top: 20px;
@@ -123,7 +120,6 @@
       font-weight: bold;
       margin-top: 10px;
     }
-
     /* Rodapé */
     footer.footer {
       border-top: 1px solid #444;
@@ -145,6 +141,37 @@
       height: 16px;
       fill: #fff;
     }
+    /* Responsividade para dispositivos móveis */
+    @media (max-width: 600px) {
+      body {
+        margin: 10px;
+      }
+      .container {
+        padding: 10px;
+        min-height: auto;
+      }
+      #cabeçalhoredondo {
+        bottom: -50px; /* Ajusta para telas menores */
+      }
+      .product-grid {
+        padding: 10px;
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+      }
+      .product-card {
+        width: 100%;
+        max-width: 300px;
+      }
+      .purchase-container input {
+        width: 90%;
+      }
+      footer.footer {
+        flex-direction: column;
+        text-align: center;
+        margin-top: 100px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -152,19 +179,14 @@
     <div id="cabeçalho">  
       <img src="/CInePremium1.png" alt="Imagem de Cabeçalho">
     </div>
-
-    
-    <!-- Cabeçalho redondo, sobreposto -->
-  <div id="cabeçalhoredondo" style="position: absolute; left: 50%; transform: translateX(-50%); bottom: -100px;">
-    <img src="/cinepremiumredondo.png" alt="Imagem Redonda">
-  </div>
-    
-    
+    <!-- Cabeçalho redondo sobreposto -->
+    <div id="cabeçalhoredondo">
+      <img src="/cinepremiumredondo.png" alt="Imagem Redonda">
+    </div>
     <!-- Grid de produtos -->
     <div id="productGrid" class="product-grid">
       <!-- Cards de produtos serão inseridos aqui -->
     </div>
-    
     <!-- Área de checkout -->
     <div id="purchaseContainer" class="purchase-container">
       <h2>Detalhes da Compra</h2>
@@ -173,7 +195,6 @@
       <input type="tel" id="telefone" placeholder="Digite seu telefone">
       <br>
       <button id="generateBtn" class="button" disabled>Gerar QR Code</button>
-      
       <div id="qrDisplay" class="qr-section" style="display: none;">
         <h3>Pagamento via QR Code</h3>
         <div id="qrCodeImg"></div>
@@ -184,13 +205,10 @@
       </div>
       <button id="backBtn" class="button" style="margin-top:15px;">Voltar aos Produtos</button>
     </div>
-
-    
-     <!-- Rodapé -->
-     <footer class="footer">
+    <!-- Rodapé -->
+    <footer class="footer">
       <span>&copy; 2025 - Todos os direitos reservados</span>
       <span class="email-icon">
-        <!-- Ícone de email (inline SVG) -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
           <path d="M0 0h24v24H0z" fill="none"/>
           <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -205,7 +223,7 @@
     let transactionId = null;
     let pollingInterval = null;
     
-    // Habilita o botão "Gerar QR Code" somente se os campos nome e telefone estiverem preenchidos
+    // Habilita o botão "Gerar QR Code" se os campos nome e telefone estiverem preenchidos
     function validateCheckoutFields() {
       const nome = document.getElementById('nome').value.trim();
       const telefone = document.getElementById('telefone').value.trim();
@@ -301,39 +319,37 @@
     
     // Gera o QR Code de pagamento, enviando também os dados do cliente
     document.getElementById('generateBtn').addEventListener('click', function() {
-  if (!selectedProduct) return;
-  const nome = document.getElementById('nome').value.trim();
-  const telefone = document.getElementById('telefone').value.trim();
-
-  fetch('/gerarqrcode', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      value: selectedProduct.price, 
-      nome, 
-      telefone,
-      productTitle: selectedProduct.title,
-      productDescription: selectedProduct.description || ''
-    })
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Erro na requisição');
-    return response.json();
-  })
-  .then(data => {
-    document.getElementById('qrDisplay').style.display = 'block';
-    document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento">`;
-    document.getElementById('qrCodeText').textContent = data.qr_code + ' - ' + data.descricao;
-    transactionId = data.id;
-    document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
-    if (pollingInterval) clearInterval(pollingInterval);
-    pollingInterval = setInterval(checkPaymentStatus, 5000);
-  })
-  .catch(error => {
-    alert('Erro ao gerar o código: ' + error);
-  });
-});
-
+      if (!selectedProduct) return;
+      const nome = document.getElementById('nome').value.trim();
+      const telefone = document.getElementById('telefone').value.trim();
+      fetch('/gerarqrcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          value: selectedProduct.price, 
+          nome, 
+          telefone,
+          productTitle: selectedProduct.title,
+          productDescription: selectedProduct.description || ''
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Erro na requisição');
+        return response.json();
+      })
+      .then(data => {
+        document.getElementById('qrDisplay').style.display = 'block';
+        document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento">`;
+        document.getElementById('qrCodeText').textContent = data.qr_code + ' - ' + data.descricao;
+        transactionId = data.id;
+        document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = setInterval(checkPaymentStatus, 5000);
+      })
+      .catch(error => {
+        alert('Erro ao gerar o código: ' + error);
+      });
+    });
     
     // Copia o código do QR Code para a área de transferência
     document.getElementById('copyBtn').addEventListener('click', function() {
@@ -343,7 +359,6 @@
         .catch(err => alert('Erro ao copiar: ' + err));
     });
     
-    // Carrega os produtos ao abrir a página
     window.onload = loadProducts;
   </script>
 </body>
