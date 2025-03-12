@@ -119,6 +119,12 @@
       color: #ffffff;
       margin-top: 10px;
     }
+
+    .confirmation-text {  
+      font-size: 14px;
+      color: white;
+    }
+
     .status-feedback {
       font-size: 16px;
       font-weight: bold;
@@ -332,9 +338,9 @@
       .then(data => {
         if (data.status && data.status.toLowerCase() !== 'created') {
           document.getElementById('mainContainer').innerHTML = `
-            <h1>Obrigado pela sua compra!</h1>
-            <p>Sua transação foi confirmada.</p>
-            <p>ID da Transação: ${transactionId}</p>
+            <h1 class="confirmation-text">Obrigado pela sua compra!</h1>
+            <p class="confirmation-text">Sua transação foi confirmada.</p>
+            <p class="confirmation-text">ID da Transação: ${transactionId}</p>
           `;
           clearInterval(pollingInterval);
         } else {
