@@ -31,12 +31,14 @@
     }
     /* Cabeçalho redondo (sobreposto) */
     #cabeçalhoredondo {
-      position: absolute;
+      
+      position: relative;
       left: 50%;
       transform: translateX(-50%);
-      top: 160px; /* Ajuste conforme o efeito desejado */
+      top: -40px; /* Ajuste conforme o efeito desejado */
       z-index: 2;
       text-align: center;
+      
     }
     #cabeçalhoredondo img {
       width: 100px;
@@ -53,7 +55,7 @@
     .product-grid {
       padding: 30px;
       display: flex;
-      margin-top: 80px;
+      margin-top:   0px;
       flex-wrap: wrap;
       gap: 20px;
       justify-content: center;
@@ -141,7 +143,27 @@
       height: 16px;
       fill: #fff;
     }
+
+     /* Responsividade para dispositivos móveis */
+     @media (max-width: 900px) {
+      
+      #cabeçalhoredondo img {
+      width: 90px;
+      height: 90px;
+
+      }
+    }
+
     /* Responsividade para dispositivos móveis */
+    @media (max-width: 768px) {
+      
+      #cabeçalhoredondo img {
+      width: 80px;
+      height: 80px;
+
+      }
+    }
+
     @media (max-width: 600px) {
       body {
         margin: 10px;
@@ -151,11 +173,11 @@
         min-height: auto;
       }
       #cabeçalhoredondo {
-        top: 80px; /* Ajusta para telas menores */
+        top: -10px; /* Ajusta para telas menores */
       }
       #cabeçalhoredondo img {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
      
       }
       .product-grid {
