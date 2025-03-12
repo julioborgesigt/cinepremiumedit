@@ -10,15 +10,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       image: {
-        // Pode ser uma URL ou uma string em base64
-        type: DataTypes.STRING,
+        // Utilize TEXT para imagens longas (ex: base64)
+        type: DataTypes.TEXT,
         allowNull: false,
       },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
+      },
+      orderIndex: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
       }
     });
     return Product;
-  };
-  
+};
