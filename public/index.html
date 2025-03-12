@@ -109,12 +109,14 @@
       max-width: 300px;
     }
     .qr-section img {
-      max-width: 100%;
+      max-width: 200px; /* ou 200px, conforme desejado */
       height: auto;
+      margin: auto;
     }
+
     .copy-info {
       font-size: 14px;
-      color: #555;
+      color: #ffffff;
       margin-top: 10px;
     }
     .status-feedback {
@@ -216,8 +218,8 @@
     </div>
     <!-- Área de checkout -->
     <div id="purchaseContainer" class="purchase-container">
-      <h2>Detalhes da Compra</h2>
-      <p id="productInfo"></p>
+      <h1>Detalhes da Compra</h1>
+      <h2><p id="productInfo"></p></h2>
       <input type="text" id="nome" placeholder="Digite seu nome">
       <input type="tel" id="telefone" placeholder="Digite seu telefone">
       <br>
@@ -367,7 +369,7 @@
       .then(data => {
         document.getElementById('qrDisplay').style.display = 'block';
         document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento">`;
-        document.getElementById('qrCodeText').textContent = data.qr_code + ' - ' + data.descricao;
+        document.getElementById('qrCodeText').textContent = data.qr_code;
         transactionId = data.id;
         document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
         if (pollingInterval) clearInterval(pollingInterval);
