@@ -65,54 +65,59 @@ const PERIOD_MS = 27 * 24 * 60 * 60 * 1000; // 27 dias em milissegundos (2332800
 
 // Endpoint para gerar QR Code de pagamento
 app.post('/gerarqrcode', async (req, res) => {
-    try {
-      const { value, nome, telefone, productTitle, productDescription } = req.body;
-      if (!value || !nome || !telefone) {
-        return res.status(400).json({ error: "Os campos 'value', 'nome' e 'telefone' são obrigatórios." });
-      }
-      // Lógica de limitação por telefone...
-      const now = Date.now();
-      if (qrCodeRequests[telefone]) {
-        const record = qrCodeRequests[telefone];
-        if (now - record.timestamp < PERIOD_MS && record.count >= MAX_QR_PER_PHONE) {
-          return res.status(429).json({ error: 'Limite de QR codes gerados para este telefone atingido. Tente novamente mais tarde.' });
-        } else if (now - record.timestamp >= PERIOD_MS) {
-          qrCodeRequests[telefone] = { timestamp: now, count: 0 };
-        }
-      } else {
+  try {
+    const { value, nome, telefone, productTitle, productDescription } = req.body;
+    if (!value || !nome || !telefone) {
+      return res.status(400).json({ error: "Os campos 'value', 'nome' e 'telefone' são obrigatórios." });
+    }
+    
+    // ... Lógica de limitação por telefone, etc. ...
+    const now = Date.now();
+    if (qrCodeRequests[telefone]) {
+      const record = qrCodeRequests[telefone];
+      if (now - record.timestamp < PERIOD_MS && record.count >= MAX_QR_PER_PHONE) {
+        return res.status(429).json({ error: 'Limite de QR codes gerados para este telefone atingido. Tente novamente mais tarde.' });
+      } else if (now - record.timestamp >= PERIOD_MS) {
         qrCodeRequests[telefone] = { timestamp: now, count: 0 };
       }
-      qrCodeRequests[telefone].count += 1;
-      
-      const url = "https://api.pushinpay.com.br/api/pix/cashIn";
-      const headers = {
-        "Authorization": "Bearer 19791|u8GA1xGVUbQudFT1kGIUtJ0CVVmjjJsFggskj2ZXd717d62d",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      };
-      const payload = {
-        value,
-        webhook_url: "http://teste.com"
-      };
-      const response = await axios.post(url, payload, { headers });
-      const data = response.data;
-      // Se os dados do produto foram enviados, componha a descrição personalizada; caso contrário, use um padrão.
-      const descricao = (productTitle && productDescription)
-        ? `${productTitle} - ${productDescription} por R$${(value / 100).toFixed(2)}`
-        : `Compra de ${nome} - Café (1kg) por R$${(value / 100).toFixed(2)}`;
-  
-      const resultado = {
-        id: data.id,
-        qr_code: data.qr_code,
-        qr_code_base64: data.qr_code_base64,
-        descricao
-      };
-      res.json(resultado);
-    } catch (error) {
-      console.error("Erro ao gerar QR code:", error.message);
-      res.status(500).json({ error: "Erro ao gerar QR code" });
+    } else {
+      qrCodeRequests[telefone] = { timestamp: now, count: 0 };
     }
-  });
+    qrCodeRequests[telefone].count += 1;
+    
+    const url = "https://api.pushinpay.com.br/api/pix/cashIn";
+    const headers = {
+      "Authorization": "Bearer 19791|u8GA1xGVUbQudFT1kGIUtJ0CVVmjjJsFggskj2ZXd717d62d",
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    };
+    const payload = {
+      value,
+      webhook_url: "http://teste.com"
+    };
+    const response = await axios.post(url, payload, { headers });
+    const data = response.data;
+    
+    // Compondo a descrição com os dados do produto (se fornecidos)
+    const descricao = (productTitle && productDescription)
+      ? `${productTitle} - ${productDescription} por R$${(value / 100).toFixed(2)}`
+      : `Compra de ${nome} - Café (1kg) por R$${(value / 100).toFixed(2)}`;
+
+    // Retorna os dados da API sem sobrescrever com o telefone
+    const resultado = {
+      id: data.id,
+      qr_code: data.qr_code,              // Código para copiar e colar
+      qr_code_base64: data.qr_code_base64,  // Imagem gerada do QR Code
+      descricao
+    };
+    console.log("QR Code gerado:", resultado);
+    res.json(resultado);
+  } catch (error) {
+    console.error("Erro ao gerar QR code:", error.message);
+    res.status(500).json({ error: "Erro ao gerar QR code" });
+  }
+});
+
   
   
 

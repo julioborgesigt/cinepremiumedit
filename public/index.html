@@ -354,37 +354,45 @@
     
     // Gera o QR Code de pagamento, enviando também os dados do cliente
     document.getElementById('generateBtn').addEventListener('click', function() {
-      if (!selectedProduct) return;
-      const nome = document.getElementById('nome').value.trim();
-      const telefone = document.getElementById('telefone').value.trim();
-      fetch('/gerarqrcode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          value: selectedProduct.price, 
-          nome, 
-          telefone,
-          productTitle: selectedProduct.title,
-          productDescription: selectedProduct.description || ''
-        })
+    if (!selectedProduct) return;
+    const nome = document.getElementById('nome').value.trim();
+    const telefone = document.getElementById('telefone').value.trim();
+    fetch('/gerarqrcode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        value: selectedProduct.price, 
+        nome, 
+        telefone,
+        productTitle: selectedProduct.title,
+        productDescription: selectedProduct.description || ''
       })
-      .then(response => {
-        if (!response.ok) throw new Error('Erro na requisição');
-        return response.json();
-      })
-      .then(data => {
-        document.getElementById('qrDisplay').style.display = 'block';
-        document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento">`;
-        document.getElementById('qrCodeText').textContent = data.qr_code;
-        transactionId = data.id;
-        document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
-        if (pollingInterval) clearInterval(pollingInterval);
-        pollingInterval = setInterval(checkPaymentStatus, 5000);
-      })
-      .catch(error => {
-        alert('Erro ao gerar o código: ' + error);
-      });
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Erro na requisição');
+      return response.json();
+    })
+    .then(data => {
+      // Exibe a área do QR Code
+      document.getElementById('qrDisplay').style.display = 'block';
+      // Oculta os campos e o botão de gerar QR Code
+      document.getElementById('nome').style.display = 'none';
+      document.getElementById('telefone').style.display = 'none';
+      document.getElementById('generateBtn').style.display = 'none';
+      
+      document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento" style="width:150px; height:auto;">`;
+      document.getElementById('qrCodeText').textContent = data.qr_code;
+      transactionId = data.id;
+      document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
+      if (pollingInterval) clearInterval(pollingInterval);
+      pollingInterval = setInterval(checkPaymentStatus, 5000);
+    })
+    .catch(error => {
+      alert('Erro ao gerar o código: ' + error);
     });
+  });
+
+
     
     // Copia o código do QR Code para a área de transferência
     document.getElementById('copyBtn').addEventListener('click', function() {
