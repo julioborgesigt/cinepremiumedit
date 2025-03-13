@@ -1,8 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { Product } = require('./models');
 const axios = require('axios'); // Utilize axios para requisições HTTP
+const { Op } = require('sequelize');
+const { Product, PurchaseHistory } = require('./models');
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -64,6 +66,7 @@ const MAX_QR_PER_PHONE = 3; // Permite até 3 QR codes por período
 const PERIOD_MS = 27 * 24 * 60 * 60 * 1000; // 27 dias em milissegundos (2332800000 ms)
 
 // Endpoint para gerar QR Code de pagamento
+// Endpoint para gerar QR Code de pagamento
 app.post('/gerarqrcode', async (req, res) => {
   try {
     const { value, nome, telefone, productTitle, productDescription } = req.body;
@@ -71,7 +74,7 @@ app.post('/gerarqrcode', async (req, res) => {
       return res.status(400).json({ error: "Os campos 'value', 'nome' e 'telefone' são obrigatórios." });
     }
     
-    // ... Lógica de limitação por telefone, etc. ...
+    // Lógica de limitação por telefone, etc.
     const now = Date.now();
     if (qrCodeRequests[telefone]) {
       const record = qrCodeRequests[telefone];
@@ -98,16 +101,17 @@ app.post('/gerarqrcode', async (req, res) => {
     const response = await axios.post(url, payload, { headers });
     const data = response.data;
     
-    // Compondo a descrição com os dados do produto (se fornecidos)
     const descricao = (productTitle && productDescription)
       ? `${productTitle} - ${productDescription} por R$${(value / 100).toFixed(2)}`
       : `Compra de ${nome} - Café (1kg) por R$${(value / 100).toFixed(2)}`;
-
-    // Retorna os dados da API sem sobrescrever com o telefone
+    
+    // Registra o histórico da compra
+    await PurchaseHistory.create({ nome, telefone });
+    
     const resultado = {
       id: data.id,
-      qr_code: data.qr_code,              // Código para copiar e colar
-      qr_code_base64: data.qr_code_base64,  // Imagem gerada do QR Code
+      qr_code: data.qr_code,
+      qr_code_base64: data.qr_code_base64,
       descricao
     };
     console.log("QR Code gerado:", resultado);
@@ -118,8 +122,8 @@ app.post('/gerarqrcode', async (req, res) => {
   }
 });
 
-  
-  
+
+ 
 
 // Endpoint para verificar o status do pagamento (permanece inalterado)
 app.post('/verificastatus', async (req, res) => {
@@ -166,3 +170,31 @@ app.delete('/api/products/:id', async (req, res) => {
       res.status(500).json({ error: 'Erro ao excluir produto.' });
     }
   });
+
+
+  app.get('/api/purchase-history', async (req, res) => {
+    try {
+      const { nome, telefone, mes, ano } = req.query;
+      let where = {};
+  
+      if (nome) {
+        where.nome = { [Op.like]: `%${nome}%` };
+      }
+      if (telefone) {
+        where.telefone = telefone;
+      }
+      if (mes && ano) {
+        const startDate = new Date(ano, mes - 1, 1);
+        const endDate = new Date(ano, mes, 0, 23, 59, 59);
+        where.dataTransacao = { [Op.between]: [startDate, endDate] };
+      }
+  
+      const history = await PurchaseHistory.findAll({ where, order: [['dataTransacao', 'DESC']] });
+      res.json(history);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Erro ao buscar histórico.' });
+    }
+  });
+  
+  

@@ -2,89 +2,199 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin - Produtos</title>
   <style>
+    /* Estilos Gerais */
     body {
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      margin: 20px;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
     }
+    
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       background: #fff;
       padding: 20px;
-      border-radius: 8px;
-      
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
     }
+    
     h1, h2 {
       text-align: center;
+      color: #333;
     }
+
+    /* Estilização do Formulário */
     form {
+      background: #fafafa;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
       margin-bottom: 30px;
-      padding: 30px;
     }
+    
     label {
       display: block;
-      margin-top: 10px;
+      margin: 10px 0 5px;
+      font-weight: bold;
+      color: #333;
     }
-    input, textarea {
+    
+    input, textarea, select {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
     }
+
     button {
-      margin-top: 15px;
-      padding: 10px 20px;
+      display: block;
+      width: 100%;
+      padding: 10px;
       background: #007BFF;
-      color: #fff;
+      color: white;
       border: none;
+      border-radius: 5px;
       cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background 0.3s ease-in-out;
     }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    /* Grid de Produtos */
     .product-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
-    }
-    .product-card {
-      width: 200px;
-      height: auto;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      background: #fafafa;
-      text-align: center;
-      padding: 10px;
-      position: relative; /* para posicionar o botão de exclusão */
-      cursor: move; /* indica que o item pode ser arrastado */
     }
+
+    .product-card {
+      width: 250px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      padding: 15px;
+      position: relative;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .product-card:hover {
+      transform: scale(1.03);
+    }
+
     .product-card img {
       max-width: 100%;
-      max-height: 100px;
+      max-height: 120px;
+      border-radius: 5px;
     }
+
     .delete-button {
       position: absolute;
-      top: -10px;
-      right: 5px;
+      top: 10px;
+      right: 10px;
       background: red;
-      color: #fff;
+      color: white;
       border: none;
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
+      width: 30px;
+      height: 30px;
       cursor: pointer;
       font-weight: bold;
-      line-height: 20px;
-      text-align: center;
-      padding: 0;
     }
-    /* Classe para o ghost element durante o drag */
-    .sortable-ghost {
-      opacity: 0.5;
+
+    /* Estilos do Filtro de Histórico */
+    #historySearch {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      margin-top: 30px;
+    }
+
+    #historySearch input, #historySearch select{
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      background: #fff;
+      width: 100%;
+    }
+
+    #searchButton {
+      background: #007BFF;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    #searchButton:hover {
+      background: #0056b3;
+    }
+
+    /* Estilização da Tabela */
+    #historyResults table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #historyResults th, #historyResults td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    #historyResults th {
+      background: #007BFF;
+      color: white;
+      font-weight: bold;
+    }
+
+    #historyResults tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    #historyResults tr:hover {
+      background: #f1f1f1;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .product-grid {
+        flex-direction: column;
+        align-items: center;
+      }
+      .product-card {
+        width: 90%;
+      }
+      #historySearch {
+        flex-direction: column;
+        gap: 10px;
+      }
+      #historySearch input, #historySearch select, #historySearch button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -93,25 +203,38 @@
     <h1>Admin - Gerenciar Produtos</h1>
     <form id="productForm">
       <label for="title">Título:</label>
-      <input type="text" id="title" name="title" required>
+      <input type="text" id="title" required>
       
-      <label for="price">Preço (em centavos):</label>
-      <input type="number" id="price" name="price" required>
+      <label for="price">Preço (centavos):</label>
+      <input type="number" id="price" required>
       
-      <label for="image">URL ou Base64 da Imagem:</label>
-      <input type="text" id="image" name="image" required>
+      <label for="image">Imagem (URL/Base64):</label>
+      <input type="text" id="image" required>
       
       <label for="description">Descrição:</label>
-      <textarea id="description" name="description"></textarea>
+      <textarea id="description"></textarea>
       
       <button type="submit">Adicionar Produto</button>
     </form>
     
     <h2>Produtos Existentes</h2>
-    <div class="product-grid" id="productGrid">
-      <!-- Os produtos serão listados aqui -->
+    <div class="product-grid" id="productGrid"></div>
+
+    <!-- Seção de Histórico de Compras -->
+    <h2>Histórico de Compras</h2>
+    <div id="historySearch">
+      <input type="text" id="searchNome" placeholder="Buscar por Nome">
+      <input type="text" id="searchTelefone" placeholder="Buscar por Telefone">
+      <select id="mes"></select>
+      <select id="ano"></select>
+      <button id="searchButton">Buscar</button>
     </div>
+
+    <div id="historyResults"></div>
   </div>
+</body>
+</html>
+
   
   <!-- Carrega a biblioteca Sortable.js -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -165,30 +288,30 @@
         grid.appendChild(card);
       });
       // Inicializa o Sortable para reordenar os cards
-      new Sortable(grid, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        onEnd: function(evt) {
-          // Captura a nova ordem dos IDs
-          const newOrder = [];
-          document.querySelectorAll('.product-card').forEach(card => {
-            newOrder.push(card.getAttribute('data-id'));
-          });
-          // Envia a nova ordem para o servidor
-          fetch('/api/products/reorder', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order: newOrder })
-          })
-          .then(response => response.json())
-          .then(data => console.log(data))
-          .catch(error => console.error(error));
-        }
-      });
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+        new Sortable(grid, {
+          animation: 150,
+          ghostClass: 'sortable-ghost',
+          onEnd: function(evt) {
+            // Captura a nova ordem dos IDs
+            const newOrder = [];
+            document.querySelectorAll('.product-card').forEach(card => {
+              newOrder.push(card.getAttribute('data-id'));
+            });
+            // Envia a nova ordem para o servidor
+            fetch('/api/products/reorder', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: newOrder })
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error(error));
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      }
     }
-  }
     
     // Função para excluir um produto
     async function deleteProduct(productId) {
@@ -207,8 +330,92 @@
     }
   }
     
-    // Carrega os produtos ao abrir a página
-    window.onload = loadProducts;
+  
+
+
+
+  
+  function carregarMesAno() {
+    const selectMes = document.getElementById('mes');
+    const selectAno = document.getElementById('ano');
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    const mesAtual = hoje.getMonth() + 1;
+
+    // Preenche os meses
+    const meses = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    selectMes.innerHTML = meses.map((m, i) => 
+      `<option value="${i + 1}" ${i + 1 === mesAtual ? "selected" : ""}>${m}</option>`
+    ).join("");
+
+    // Preenche os anos a partir de 2025 até o ano atual
+    selectAno.innerHTML = "";
+    for (let ano = 2025; ano <= anoAtual; ano++) {
+      selectAno.innerHTML += `<option value="${ano}" ${ano === anoAtual ? "selected" : ""}>${ano}</option>`;
+    }
+  }
+
+  async function loadHistory() {
+    const nome = document.getElementById('searchNome')?.value.trim() || "";
+    const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
+    const mes = document.getElementById('mes').value;
+    const ano = document.getElementById('ano').value;
+
+    let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
+    if (nome) url += `&nome=${encodeURIComponent(nome)}`;
+    if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
+
+    try {
+      const response = await fetch(url);
+      const history = await response.json();
+      const resultsDiv = document.getElementById('historyResults');
+      resultsDiv.innerHTML = '';
+
+      if (history.length === 0) {
+        resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
+        return;
+      }
+
+      let html = '<table border="1" style="width:100%; text-align:left;">';
+      html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th></tr>';
+      history.forEach(item => {
+        html += `<tr>
+          <td>${item.nome}</td>
+          <td>${formatPhone(item.telefone)}</td>
+          <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      resultsDiv.innerHTML = html;
+    } catch (error) {
+      alert('Erro ao carregar histórico: ' + error);
+    }
+  }
+
+  function formatPhone(value) {
+    value = value.replace(/\D/g, "");
+    if (value.length > 0) value = "(" + value;
+    if (value.length > 3) value = value.slice(0, 3) + ") " + value.slice(3);
+    if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10);
+    return value;
+  }
+
+  document.getElementById('searchButton').addEventListener('click', loadHistory);
+
+  // Carrega automaticamente o mês atual ao abrir a página
+  window.onload = () => {
+  loadProducts();
+  carregarMesAno();
+  loadHistory();
+};
+
+
+
+
+
   </script>
 </body>
 </html>

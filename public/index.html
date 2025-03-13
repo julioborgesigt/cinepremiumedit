@@ -403,6 +403,46 @@
     });
     
     window.onload = loadProducts;
+
+    // Função para formatar o telefone
+function formatPhone(value) {
+  // Remove tudo que não for dígito
+  value = value.replace(/\D/g, "");
+  // Limita a 11 dígitos
+  value = value.substring(0, 11);
+  
+  // Aplica a máscara: (xx) xxxxx-xxxx
+  if (value.length > 0) {
+    value = "(" + value;
+  }
+  if (value.length > 3) {
+    value = value.slice(0, 3) + ") " + value.slice(3);
+  }
+  if (value.length > 10) {
+    value = value.slice(0, 10) + "-" + value.slice(10);
+  }
+  return value;
+}
+
+    // Aplica a formatação em tempo real
+    document.getElementById('telefone').addEventListener('input', function(e) {
+      this.value = formatPhone(this.value);
+    });
+
+    // Atualiza a validação para garantir que o telefone tenha exatamente 11 dígitos
+    function validateCheckoutFields() {
+      const nome = document.getElementById('nome').value.trim();
+      // Remove caracteres não numéricos para contar somente os dígitos
+      const telefoneDigits = document.getElementById('telefone').value.replace(/\D/g, "");
+      // Habilita o botão se nome estiver preenchido e o telefone tiver exatamente 11 dígitos
+      document.getElementById('generateBtn').disabled = !(nome && telefoneDigits.length === 11);
+    }
+
+    document.getElementById('nome').addEventListener('input', validateCheckoutFields);
+    document.getElementById('telefone').addEventListener('input', validateCheckoutFields);
+
+
+
   </script>
 </body>
 </html>
