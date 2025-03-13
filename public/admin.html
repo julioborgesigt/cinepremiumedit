@@ -128,7 +128,7 @@
       margin-top: 30px;
     }
 
-    #historySearch input, #historySearch select{
+    #historySearch input, #historySearch select {
       padding: 10px;
       font-size: 16px;
       border-radius: 5px;
@@ -232,14 +232,11 @@
 
     <div id="historyResults"></div>
   </div>
-</body>
-</html>
-
   
   <!-- Carrega a biblioteca Sortable.js -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
-    // Função para enviar o formulário e adicionar um novo produto
+    // Envia o formulário e adiciona um novo produto
     document.getElementById('productForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const title = document.getElementById('title').value;
@@ -266,31 +263,35 @@
       }
     });
     
-    // Função para carregar os produtos e exibi-los em cards
+    // Carrega os produtos e exibe-os em cards
     async function loadProducts() {
-    try {
-      const response = await fetch('/api/products');
-      const products = await response.json();
-      const grid = document.getElementById('productGrid');
-      grid.innerHTML = '';
-      products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        // Atribui o id do produto em um data attribute
-        card.setAttribute('data-id', product.id);
-        card.innerHTML = `
-          <button class="delete-button" onclick="deleteProduct(${product.id})">x</button>
-          <img src="${product.image}" alt="${product.title}">
-          <h3>${product.title}</h3>
-          <p>Preço: R$${(product.price/100).toFixed(2)}</p>
-          <p>${product.description || ''}</p>
-        `;
-        grid.appendChild(card);
-      });
-      // Inicializa o Sortable para reordenar os cards
+      try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = '';
+        products.forEach(product => {
+          const card = document.createElement('div');
+          card.className = 'product-card';
+          // Atribui o id do produto via atributo data
+          card.setAttribute('data-id', product.id);
+          card.innerHTML = `
+            <button class="delete-button" onclick="deleteProduct(${product.id})">x</button>
+            <img src="${product.image}" alt="${product.title}">
+            <h3>${product.title}</h3>
+            <p>Preço: R$${(product.price/100).toFixed(2)}</p>
+            <p>${product.description || ''}</p>
+          `;
+          grid.appendChild(card);
+        });
+        // Inicializa o Sortable para reordenar os cards
         new Sortable(grid, {
           animation: 150,
           ghostClass: 'sortable-ghost',
+          delay: 1000,              // 1 segundo de atraso para iniciar o arraste
+          delayOnTouchOnly: true,   // Atraso aplicado apenas em dispositivos de toque
+          filter: '.delete-button', // Exclui o botão de exclusão da ação de arrastar
+          preventOnFilter: false,   // Permite que o clique no botão funcione normalmente
           onEnd: function(evt) {
             // Captura a nova ordem dos IDs
             const newOrder = [];
@@ -315,107 +316,97 @@
     
     // Função para excluir um produto
     async function deleteProduct(productId) {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
-    try {
-      const response = await fetch(`/api/products/${productId}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) {
-        throw new Error('Erro ao excluir produto');
+      if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+      try {
+        const response = await fetch(`/api/products/${productId}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) {
+          throw new Error('Erro ao excluir produto');
+        }
+        alert('Produto excluído com sucesso!');
+        loadProducts();
+      } catch (error) {
+        alert(error);
       }
-      alert('Produto excluído com sucesso!');
-      loadProducts();
-    } catch (error) {
-      alert(error);
     }
-  }
     
-  
+    function carregarMesAno() {
+      const selectMes = document.getElementById('mes');
+      const selectAno = document.getElementById('ano');
+      const hoje = new Date();
+      const anoAtual = hoje.getFullYear();
+      const mesAtual = hoje.getMonth() + 1;
 
+      // Preenche os meses
+      const meses = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      ];
+      selectMes.innerHTML = meses.map((m, i) => 
+        `<option value="${i + 1}" ${i + 1 === mesAtual ? "selected" : ""}>${m}</option>`
+      ).join("");
 
-
-  
-  function carregarMesAno() {
-    const selectMes = document.getElementById('mes');
-    const selectAno = document.getElementById('ano');
-    const hoje = new Date();
-    const anoAtual = hoje.getFullYear();
-    const mesAtual = hoje.getMonth() + 1;
-
-    // Preenche os meses
-    const meses = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
-    selectMes.innerHTML = meses.map((m, i) => 
-      `<option value="${i + 1}" ${i + 1 === mesAtual ? "selected" : ""}>${m}</option>`
-    ).join("");
-
-    // Preenche os anos a partir de 2025 até o ano atual
-    selectAno.innerHTML = "";
-    for (let ano = 2025; ano <= anoAtual; ano++) {
-      selectAno.innerHTML += `<option value="${ano}" ${ano === anoAtual ? "selected" : ""}>${ano}</option>`;
-    }
-  }
-
-  async function loadHistory() {
-    const nome = document.getElementById('searchNome')?.value.trim() || "";
-    const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
-    const mes = document.getElementById('mes').value;
-    const ano = document.getElementById('ano').value;
-
-    let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
-    if (nome) url += `&nome=${encodeURIComponent(nome)}`;
-    if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
-
-    try {
-      const response = await fetch(url);
-      const history = await response.json();
-      const resultsDiv = document.getElementById('historyResults');
-      resultsDiv.innerHTML = '';
-
-      if (history.length === 0) {
-        resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
-        return;
+      // Preenche os anos a partir de 2025 até o ano atual
+      selectAno.innerHTML = "";
+      for (let ano = 2025; ano <= anoAtual; ano++) {
+        selectAno.innerHTML += `<option value="${ano}" ${ano === anoAtual ? "selected" : ""}>${ano}</option>`;
       }
-
-      let html = '<table border="1" style="width:100%; text-align:left;">';
-      html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th></tr>';
-      history.forEach(item => {
-        html += `<tr>
-          <td>${item.nome}</td>
-          <td>${formatPhone(item.telefone)}</td>
-          <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
-        </tr>`;
-      });
-      html += '</table>';
-      resultsDiv.innerHTML = html;
-    } catch (error) {
-      alert('Erro ao carregar histórico: ' + error);
     }
-  }
 
-  function formatPhone(value) {
-    value = value.replace(/\D/g, "");
-    if (value.length > 0) value = "(" + value;
-    if (value.length > 3) value = value.slice(0, 3) + ") " + value.slice(3);
-    if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10);
-    return value;
-  }
+    async function loadHistory() {
+      const nome = document.getElementById('searchNome')?.value.trim() || "";
+      const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
+      const mes = document.getElementById('mes').value;
+      const ano = document.getElementById('ano').value;
 
-  document.getElementById('searchButton').addEventListener('click', loadHistory);
+      let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
+      if (nome) url += `&nome=${encodeURIComponent(nome)}`;
+      if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
 
-  // Carrega automaticamente o mês atual ao abrir a página
-  window.onload = () => {
-  loadProducts();
-  carregarMesAno();
-  loadHistory();
-};
+      try {
+        const response = await fetch(url);
+        const history = await response.json();
+        const resultsDiv = document.getElementById('historyResults');
+        resultsDiv.innerHTML = '';
 
+        if (history.length === 0) {
+          resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
+          return;
+        }
 
+        let html = '<table border="1" style="width:100%; text-align:left;">';
+        html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th></tr>';
+        history.forEach(item => {
+          html += `<tr>
+            <td>${item.nome}</td>
+            <td>${formatPhone(item.telefone)}</td>
+            <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
+          </tr>`;
+        });
+        html += '</table>';
+        resultsDiv.innerHTML = html;
+      } catch (error) {
+        alert('Erro ao carregar histórico: ' + error);
+      }
+    }
 
+    function formatPhone(value) {
+      value = value.replace(/\D/g, "");
+      if (value.length > 0) value = "(" + value;
+      if (value.length > 3) value = value.slice(0, 3) + ") " + value.slice(3);
+      if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10);
+      return value;
+    }
 
+    document.getElementById('searchButton').addEventListener('click', loadHistory);
 
+    // Carrega automaticamente os produtos, o mês/ano e o histórico ao abrir a página
+    window.onload = () => {
+      loadProducts();
+      carregarMesAno();
+      loadHistory();
+    };
   </script>
 </body>
 </html>
