@@ -16,7 +16,7 @@
     .container {
       max-width: 900px;
       margin: auto;
-      background: #000000;
+      background: #000;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -31,14 +31,12 @@
     }
     /* Cabeçalho redondo (sobreposto) */
     #cabeçalhoredondo {
-      
       position: relative;
       left: 50%;
       transform: translateX(-50%);
       top: -40px; /* Ajuste conforme o efeito desejado */
       z-index: 2;
       text-align: center;
-      
     }
     #cabeçalhoredondo img {
       width: 100px;
@@ -55,7 +53,7 @@
     .product-grid {
       padding: 30px;
       display: flex;
-      margin-top:   0px;
+      margin-top: 0px;
       flex-wrap: wrap;
       gap: 20px;
       justify-content: center;
@@ -113,18 +111,15 @@
       height: auto;
       margin: auto;
     }
-
     .copy-info {
       font-size: 14px;
-      color: #ffffff;
+      color: #fff;
       margin-top: 10px;
     }
-
     .confirmation-text {  
       font-size: 14px;
       color: white;
     }
-
     .status-feedback {
       font-size: 16px;
       font-weight: bold;
@@ -151,27 +146,77 @@
       height: 16px;
       fill: #fff;
     }
-
-     /* Responsividade para dispositivos móveis */
-     @media (max-width: 900px) {
-      
-      #cabeçalhoredondo img {
-      width: 90px;
-      height: 90px;
-
-      }
+    /* Estilização para a página de agradecimento */
+    .thank-you-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-
-    /* Responsividade para dispositivos móveis */
-    @media (max-width: 768px) {
-      
-      #cabeçalhoredondo img {
+    .thank-you-card {
+      background-color: #1c1c1c;
+      border-radius: 8px;
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    
+    .check-icon {
       width: 80px;
       height: 80px;
-
+      margin: 0 auto 20px;
+    }
+    .check-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: #4CAF50;
+    }
+    .thank-you-card h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .thank-you-card p {
+      margin: 5px 0;
+      font-size: 16px;
+      line-height: 1.4;
+      color: #fff; /* Texto branco */
+    }
+    .transaction-id {
+      color: #4CAF50;
+      font-weight: bold;
+      word-wrap: break-word;
+    }
+    .thank-you-card .button {
+      margin-top: 20px;
+      background-color: #4CAF50;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .thank-you-card .button:hover {
+      background-color: #43a047;
+    }
+    /* Responsividade para dispositivos móveis */
+    @media (max-width: 900px) {
+      #cabeçalhoredondo img {
+        width: 90px;
+        height: 90px;
       }
     }
-
+    @media (max-width: 768px) {
+      #cabeçalhoredondo img {
+        width: 80px;
+        height: 80px;
+      }
+    }
     @media (max-width: 600px) {
       body {
         margin: 10px;
@@ -181,12 +226,11 @@
         min-height: auto;
       }
       #cabeçalhoredondo {
-        top: -10px; /* Ajusta para telas menores */
+        top: -10px;
       }
       #cabeçalhoredondo img {
-      width: 60px;
-      height: 60px;
-     
+        width: 60px;
+        height: 60px;
       }
       .product-grid {
         padding: 10px;
@@ -337,10 +381,21 @@
       })
       .then(data => {
         if (data.status && data.status.toLowerCase() !== 'created') {
+          // Substitui o conteúdo atual pela página de agradecimento estilizada
           document.getElementById('mainContainer').innerHTML = `
-            <h1 class="confirmation-text">Obrigado pela sua compra!</h1>
-            <p class="confirmation-text">Sua transação foi confirmada.</p>
-            <p class="confirmation-text">ID da Transação: ${transactionId}</p>
+            <div class="thank-you-container">
+              <div class="thank-you-card">
+                <div class="check-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                    <path d="M17.6 31.5L7.7 21.6l-2.8 2.8 12.7 12.7 27.7-27.7-2.8-2.8Z"/>
+                  </svg>
+                </div>
+                <h1>Obrigado pela sua compra!</h1>
+                <p>Sua transação foi confirmada.</p>
+                <p>ID da Transação: <span class="transaction-id">${transactionId}</span></p>
+                <button class="button" onclick="window.location.href='/'">Voltar à Página Inicial</button>
+              </div>
+            </div>
           `;
           clearInterval(pollingInterval);
         } else {
@@ -354,45 +409,43 @@
     
     // Gera o QR Code de pagamento, enviando também os dados do cliente
     document.getElementById('generateBtn').addEventListener('click', function() {
-    if (!selectedProduct) return;
-    const nome = document.getElementById('nome').value.trim();
-    const telefone = document.getElementById('telefone').value.trim();
-    fetch('/gerarqrcode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        value: selectedProduct.price, 
-        nome, 
-        telefone,
-        productTitle: selectedProduct.title,
-        productDescription: selectedProduct.description || ''
+      if (!selectedProduct) return;
+      const nome = document.getElementById('nome').value.trim();
+      const telefone = document.getElementById('telefone').value.trim();
+      fetch('/gerarqrcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          value: selectedProduct.price, 
+          nome, 
+          telefone,
+          productTitle: selectedProduct.title,
+          productDescription: selectedProduct.description || ''
+        })
       })
-    })
-    .then(response => {
-      if (!response.ok) throw new Error('Erro na requisição');
-      return response.json();
-    })
-    .then(data => {
-      // Exibe a área do QR Code
-      document.getElementById('qrDisplay').style.display = 'block';
-      // Oculta os campos e o botão de gerar QR Code
-      document.getElementById('nome').style.display = 'none';
-      document.getElementById('telefone').style.display = 'none';
-      document.getElementById('generateBtn').style.display = 'none';
-      
-      document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento" style="width:150px; height:auto;">`;
-      document.getElementById('qrCodeText').textContent = data.qr_code;
-      transactionId = data.id;
-      document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
-      if (pollingInterval) clearInterval(pollingInterval);
-      pollingInterval = setInterval(checkPaymentStatus, 5000);
-    })
-    .catch(error => {
-      alert('Erro ao gerar o código: ' + error);
+      .then(response => {
+        if (!response.ok) throw new Error('Erro na requisição');
+        return response.json();
+      })
+      .then(data => {
+        // Exibe a área do QR Code
+        document.getElementById('qrDisplay').style.display = 'block';
+        // Oculta os campos e o botão de gerar QR Code
+        document.getElementById('nome').style.display = 'none';
+        document.getElementById('telefone').style.display = 'none';
+        document.getElementById('generateBtn').style.display = 'none';
+        
+        document.getElementById('qrCodeImg').innerHTML = `<img src="${data.qr_code_base64}" alt="QR Code de Pagamento" style="width:150px; height:auto;">`;
+        document.getElementById('qrCodeText').textContent = data.qr_code;
+        transactionId = data.id;
+        document.getElementById('transactionId').textContent = 'ID da Transação: ' + transactionId;
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = setInterval(checkPaymentStatus, 5000);
+      })
+      .catch(error => {
+        alert('Erro ao gerar o código: ' + error);
+      });
     });
-  });
-
-
     
     // Copia o código do QR Code para a área de transferência
     document.getElementById('copyBtn').addEventListener('click', function() {
@@ -403,32 +456,32 @@
     });
     
     window.onload = loadProducts;
-
+    
     // Função para formatar o telefone
-function formatPhone(value) {
-  // Remove tudo que não for dígito
-  value = value.replace(/\D/g, "");
-  // Limita a 11 dígitos
-  value = value.substring(0, 11);
-  
-  // Aplica a máscara: (xx) xxxxx-xxxx
-  if (value.length > 0) {
-    value = "(" + value;
-  }
-  if (value.length > 3) {
-    value = value.slice(0, 3) + ") " + value.slice(3);
-  }
-  if (value.length > 10) {
-    value = value.slice(0, 10) + "-" + value.slice(10);
-  }
-  return value;
-}
-
+    function formatPhone(value) {
+      // Remove tudo que não for dígito
+      value = value.replace(/\D/g, "");
+      // Limita a 11 dígitos
+      value = value.substring(0, 11);
+      
+      // Aplica a máscara: (xx) xxxxx-xxxx
+      if (value.length > 0) {
+        value = "(" + value;
+      }
+      if (value.length > 3) {
+        value = value.slice(0, 3) + ") " + value.slice(3);
+      }
+      if (value.length > 10) {
+        value = value.slice(0, 10) + "-" + value.slice(10);
+      }
+      return value;
+    }
+    
     // Aplica a formatação em tempo real
     document.getElementById('telefone').addEventListener('input', function(e) {
       this.value = formatPhone(this.value);
     });
-
+    
     // Atualiza a validação para garantir que o telefone tenha exatamente 11 dígitos
     function validateCheckoutFields() {
       const nome = document.getElementById('nome').value.trim();
@@ -437,12 +490,10 @@ function formatPhone(value) {
       // Habilita o botão se nome estiver preenchido e o telefone tiver exatamente 11 dígitos
       document.getElementById('generateBtn').disabled = !(nome && telefoneDigits.length === 11);
     }
-
+    
     document.getElementById('nome').addEventListener('input', validateCheckoutFields);
     document.getElementById('telefone').addEventListener('input', validateCheckoutFields);
-
-
-
+    
   </script>
 </body>
 </html>
