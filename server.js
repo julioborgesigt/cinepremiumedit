@@ -59,13 +59,6 @@ app.get('/api/products', async (req, res) => {
   
   
 
-// Lógica simples de limitação por telefone:
-// Variáveis de controle para limitar a geração de QR codes por telefone:
-const qrCodeRequests = {};
-const MAX_QR_PER_PHONE = 3; // Permite até 3 QR codes por período
-const PERIOD_MS = 27 * 24 * 60 * 60 * 1000; // 27 dias em milissegundos (2332800000 ms)
-
-// Endpoint para gerar QR Code de pagamento
 // Endpoint para gerar QR Code de pagamento
 app.post('/gerarqrcode', async (req, res) => {
   try {
@@ -74,20 +67,34 @@ app.post('/gerarqrcode', async (req, res) => {
       return res.status(400).json({ error: "Os campos 'value', 'nome' e 'telefone' são obrigatórios." });
     }
     
-    // Lógica de limitação por telefone, etc.
-    const now = Date.now();
-    if (qrCodeRequests[telefone]) {
-      const record = qrCodeRequests[telefone];
-      if (now - record.timestamp < PERIOD_MS && record.count >= MAX_QR_PER_PHONE) {
-        return res.status(429).json({ error: 'Limite de QR codes gerados para este telefone atingido. Tente novamente mais tarde.' });
-      } else if (now - record.timestamp >= PERIOD_MS) {
-        qrCodeRequests[telefone] = { timestamp: now, count: 0 };
+    // Define os intervalos de tempo
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);           // 1 hora atrás
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);   // 30 dias atrás
+
+    // Conta as tentativas dos últimos 1 hora e 30 dias para o telefone informado
+    const attemptsLastHour = await PurchaseHistory.count({
+      where: {
+        telefone,
+        dataTransacao: { [Op.gte]: oneHourAgo }
       }
-    } else {
-      qrCodeRequests[telefone] = { timestamp: now, count: 0 };
-    }
-    qrCodeRequests[telefone].count += 1;
+    });
     
+    const attemptsLastMonth = await PurchaseHistory.count({
+      where: {
+        telefone,
+        dataTransacao: { [Op.gte]: oneMonthAgo }
+      }
+    });
+    
+    // Se houver 3 ou mais tentativas na última hora OU 5 ou mais no último mês, retorna erro
+    if (attemptsLastHour >= 3 || attemptsLastMonth >= 5) {
+      return res.status(429).json({ 
+        error: 'você já tentou pagar muitas vezes, procure seu vendedor ou tente novamente depois de algumas horas'
+      });
+    }
+    
+    // Se não atingiu os limites, gera o QR code através da API externa
     const url = "https://api.pushinpay.com.br/api/pix/cashIn";
     const headers = {
       "Authorization": "Bearer 19791|u8GA1xGVUbQudFT1kGIUtJ0CVVmjjJsFggskj2ZXd717d62d",
@@ -105,8 +112,8 @@ app.post('/gerarqrcode', async (req, res) => {
       ? `${productTitle} - ${productDescription} por R$${(value / 100).toFixed(2)}`
       : `Compra de ${nome} - Café (1kg) por R$${(value / 100).toFixed(2)}`;
     
-    // Registra o histórico da compra
-    await PurchaseHistory.create({ nome, telefone });
+    // Registra a tentativa no histórico com status "Gerado" e transactionId
+    await PurchaseHistory.create({ nome, telefone, transactionId: data.id, status: 'Gerado' });
     
     const resultado = {
       id: data.id,
@@ -121,6 +128,7 @@ app.post('/gerarqrcode', async (req, res) => {
     res.status(500).json({ error: "Erro ao gerar QR code" });
   }
 });
+
 
 
  
@@ -138,6 +146,15 @@ app.post('/verificastatus', async (req, res) => {
     };
     const response = await axios.get(url, { headers });
     const data = response.data;
+    
+    // Se o status da transação não for "created", consideramos que o pagamento foi concluído com sucesso.
+    if (data.status && data.status.toLowerCase() !== 'created') {
+      await PurchaseHistory.update(
+        { status: 'Sucesso' },
+        { where: { transactionId: data.id } }
+      );
+    }
+    
     const result = {
       id: data.id,
       status: data.status
@@ -148,6 +165,7 @@ app.post('/verificastatus', async (req, res) => {
     res.status(500).json({ error: "Erro ao verificar status" });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

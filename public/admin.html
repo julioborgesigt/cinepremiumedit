@@ -355,41 +355,44 @@
     }
 
     async function loadHistory() {
-      const nome = document.getElementById('searchNome')?.value.trim() || "";
-      const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
-      const mes = document.getElementById('mes').value;
-      const ano = document.getElementById('ano').value;
+    const nome = document.getElementById('searchNome')?.value.trim() || "";
+    const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
+    const mes = document.getElementById('mes').value;
+    const ano = document.getElementById('ano').value;
 
-      let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
-      if (nome) url += `&nome=${encodeURIComponent(nome)}`;
-      if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
+    let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
+    if (nome) url += `&nome=${encodeURIComponent(nome)}`;
+    if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
 
-      try {
-        const response = await fetch(url);
-        const history = await response.json();
-        const resultsDiv = document.getElementById('historyResults');
-        resultsDiv.innerHTML = '';
+    try {
+      const response = await fetch(url);
+      const history = await response.json();
+      const resultsDiv = document.getElementById('historyResults');
+      resultsDiv.innerHTML = '';
 
-        if (history.length === 0) {
-          resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
-          return;
-        }
-
-        let html = '<table border="1" style="width:100%; text-align:left;">';
-        html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th></tr>';
-        history.forEach(item => {
-          html += `<tr>
-            <td>${item.nome}</td>
-            <td>${formatPhone(item.telefone)}</td>
-            <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
-          </tr>`;
-        });
-        html += '</table>';
-        resultsDiv.innerHTML = html;
-      } catch (error) {
-        alert('Erro ao carregar histórico: ' + error);
+      if (history.length === 0) {
+        resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
+        return;
       }
+
+      let html = '<table border="1" style="width:100%; text-align:left;">';
+      // Adiciona o cabeçalho com a coluna de Status
+      html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th><th>Status</th></tr>';
+      history.forEach(item => {
+        html += `<tr>
+          <td>${item.nome}</td>
+          <td>${formatPhone(item.telefone)}</td>
+          <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
+          <td>${item.status}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      resultsDiv.innerHTML = html;
+    } catch (error) {
+      alert('Erro ao carregar histórico: ' + error);
     }
+  }
+
 
     function formatPhone(value) {
       value = value.replace(/\D/g, "");

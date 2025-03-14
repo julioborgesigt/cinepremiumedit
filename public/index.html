@@ -208,6 +208,27 @@
     .thank-you-card .button:hover {
       background-color: #43a047;
     }
+
+    .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ff5252; /* Vermelho ou outra cor de erro */
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    max-width: 90%;
+    word-wrap: break-word;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+
+
     /* Responsividade para dispositivos móveis */
     @media (max-width: 900px) {
       #cabeçalhoredondo img {
@@ -427,10 +448,14 @@
           productDescription: selectedProduct.description || ''
         })
       })
-      .then(response => {
-        if (!response.ok) throw new Error('Erro na requisição');
+      .then(async response => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro na requisição');
+        }
         return response.json();
       })
+
       .then(data => {
         // Exibe a área do QR Code
         document.getElementById('qrDisplay').style.display = 'block';
@@ -447,7 +472,7 @@
         pollingInterval = setInterval(checkPaymentStatus, 5000);
       })
       .catch(error => {
-        alert('Erro ao gerar o código: ' + error);
+        showErrorToast(error.message);
       });
     });
     
@@ -497,6 +522,31 @@
     
     document.getElementById('nome').addEventListener('input', validateCheckoutFields);
     document.getElementById('telefone').addEventListener('input', validateCheckoutFields);
+
+
+    function showErrorToast(message) {
+  // Cria o elemento do toast
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  // Força a reflow para garantir a transição (opcional)
+  void toast.offsetWidth;
+  
+  // Adiciona a classe que ativa a opacidade
+  toast.classList.add('show');
+  
+  // Remove o toast após 4 segundos
+  setTimeout(() => {
+    toast.classList.remove('show');
+    // Remove do DOM após a transição
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 500);
+  }, 4000);
+  }
+
     
   </script>
 </body>
