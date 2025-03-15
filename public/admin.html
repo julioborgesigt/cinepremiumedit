@@ -137,15 +137,21 @@
       width: 100%;
     }
 
-    #searchButton {
+    /* Botões dentro da área de filtros */
+    #searchButton, #updateStatusButton {
+      width: 100%;
+      padding: 10px;
       background: #007BFF;
       color: white;
-      font-weight: bold;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
-      width: 100%;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background 0.3s ease-in-out;
     }
 
-    #searchButton:hover {
+    #searchButton:hover, #updateStatusButton:hover {
       background: #0056b3;
     }
 
@@ -228,6 +234,8 @@
       <select id="mes"></select>
       <select id="ano"></select>
       <button id="searchButton">Buscar</button>
+      <!-- Novo botão para atualizar status -->
+      <button id="updateStatusButton">Atualizar Status</button>
     </div>
 
     <div id="historyResults"></div>
@@ -355,44 +363,43 @@
     }
 
     async function loadHistory() {
-    const nome = document.getElementById('searchNome')?.value.trim() || "";
-    const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
-    const mes = document.getElementById('mes').value;
-    const ano = document.getElementById('ano').value;
+      const nome = document.getElementById('searchNome')?.value.trim() || "";
+      const telefone = document.getElementById('searchTelefone')?.value.trim() || "";
+      const mes = document.getElementById('mes').value;
+      const ano = document.getElementById('ano').value;
 
-    let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
-    if (nome) url += `&nome=${encodeURIComponent(nome)}`;
-    if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
+      let url = `/api/purchase-history?mes=${mes}&ano=${ano}`;
+      if (nome) url += `&nome=${encodeURIComponent(nome)}`;
+      if (telefone) url += `&telefone=${encodeURIComponent(telefone)}`;
 
-    try {
-      const response = await fetch(url);
-      const history = await response.json();
-      const resultsDiv = document.getElementById('historyResults');
-      resultsDiv.innerHTML = '';
+      try {
+        const response = await fetch(url);
+        const history = await response.json();
+        const resultsDiv = document.getElementById('historyResults');
+        resultsDiv.innerHTML = '';
 
-      if (history.length === 0) {
-        resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
-        return;
+        if (history.length === 0) {
+          resultsDiv.innerHTML = '<p>Nenhum registro encontrado.</p>';
+          return;
+        }
+
+        let html = '<table border="1" style="width:100%; text-align:left;">';
+        // Adiciona o cabeçalho com a coluna de Status
+        html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th><th>Status</th></tr>';
+        history.forEach(item => {
+          html += `<tr>
+            <td>${item.nome}</td>
+            <td>${formatPhone(item.telefone)}</td>
+            <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
+            <td>${item.status}</td>
+          </tr>`;
+        });
+        html += '</table>';
+        resultsDiv.innerHTML = html;
+      } catch (error) {
+        alert('Erro ao carregar histórico: ' + error);
       }
-
-      let html = '<table border="1" style="width:100%; text-align:left;">';
-      // Adiciona o cabeçalho com a coluna de Status
-      html += '<tr><th>Nome</th><th>Telefone</th><th>Data/Hora</th><th>Status</th></tr>';
-      history.forEach(item => {
-        html += `<tr>
-          <td>${item.nome}</td>
-          <td>${formatPhone(item.telefone)}</td>
-          <td>${new Date(item.dataTransacao).toLocaleString('pt-BR')}</td>
-          <td>${item.status}</td>
-        </tr>`;
-      });
-      html += '</table>';
-      resultsDiv.innerHTML = html;
-    } catch (error) {
-      alert('Erro ao carregar histórico: ' + error);
     }
-  }
-
 
     function formatPhone(value) {
       value = value.replace(/\D/g, "");
@@ -403,6 +410,23 @@
     }
 
     document.getElementById('searchButton').addEventListener('click', loadHistory);
+    
+    // Adiciona o event listener para o botão "Atualizar Status"
+    document.getElementById('updateStatusButton').addEventListener('click', async function() {
+      try {
+        // Chama o endpoint para atualizar status de todas as transações pendentes
+        const response = await fetch('/api/update-status');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro ao atualizar status');
+        }
+        const data = await response.json();
+        alert('Status atualizado com sucesso!');
+        loadHistory();
+      } catch (error) {
+        alert('Erro: ' + error.message);
+      }
+    });
 
     // Carrega automaticamente os produtos, o mês/ano e o histórico ao abrir a página
     window.onload = () => {
