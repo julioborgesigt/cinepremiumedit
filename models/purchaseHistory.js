@@ -21,6 +21,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+    },
+    // Novo campo para contar as verificações já realizadas
+    checkCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     }
   }, {
     tableName: 'purchase_histories',

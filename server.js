@@ -215,4 +215,123 @@ app.delete('/api/products/:id', async (req, res) => {
     }
   });
   
-  
+
+
+
+
+// Definir os intervalos de verificação (em milissegundos)
+const verificationIntervals = [
+  5 * 60 * 1000,    // 5 min
+  10 * 60 * 1000,   // 10 min
+  20 * 60 * 1000,   // 20 min
+  30 * 60 * 1000,   // 30 min
+  60 * 60 * 1000,   // 1h
+  2 * 60 * 60 * 1000,   // 2h
+  4 * 60 * 60 * 1000,   // 4h
+  8 * 60 * 60 * 1000,   // 8h
+  12 * 60 * 60 * 1000,  // 12h
+  24 * 60 * 60 * 1000   // 24h
+];
+
+// Função que agenda a verificação para uma transação pendente
+function scheduleCheck(transaction) {
+  const now = Date.now();
+  const createdTime = new Date(transaction.dataTransacao).getTime();
+  const currentCheckIndex = transaction.checkCount; // 0-based
+  if (currentCheckIndex >= verificationIntervals.length) {
+    return; // Não há mais verificações agendadas
+  }
+  const targetTime = createdTime + verificationIntervals[currentCheckIndex];
+  const delay = targetTime - now;
+  if (delay <= 0) {
+    // Se o tempo já passou, executa imediatamente
+    checkTransaction(transaction);
+  } else {
+    setTimeout(() => {
+      checkTransaction(transaction);
+    }, delay);
+  }
+}
+
+// Função que efetua a verificação do status da transação
+async function checkTransaction(transaction) {
+  try {
+    const url = `https://api.pushinpay.com.br/api/transactions/${transaction.transactionId}`;
+    const headers = {
+      "Authorization": "Bearer 19791|u8GA1xGVUbQudFT1kGIUtJ0CVVmjjJsFggskj2ZXd717d62d",
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    };
+    const response = await axios.get(url, { headers });
+    const data = response.data;
+    // Se o status não for "created", atualizamos para "Sucesso"
+    if (data.status && data.status.toLowerCase() !== 'created') {
+      await PurchaseHistory.update(
+        { status: 'Sucesso' },
+        { where: { id: transaction.id } }
+      );
+      console.log(`Transação ${transaction.transactionId} atualizada para Sucesso.`);
+    }
+  } catch (error) {
+    console.error(`Erro ao verificar transação ${transaction.transactionId}:`, error.message);
+  } finally {
+    // Incrementa o contador de verificações, independente do resultado
+    await PurchaseHistory.update(
+      { checkCount: transaction.checkCount + 1 },
+      { where: { id: transaction.id } }
+    );
+    // Recupere o registro atualizado para saber o novo checkCount e status
+    const updatedTransaction = await PurchaseHistory.findByPk(transaction.id);
+    // Se ainda estiver com status "Gerado" e não tiver realizado todas as verificações, agenda a próxima
+    if (updatedTransaction.status === 'Gerado' && updatedTransaction.checkCount < verificationIntervals.length) {
+      scheduleCheck(updatedTransaction);
+    }
+  }
+}
+
+// --- Endpoint /gerarqrcode (modificado) ---
+app.post('/gerarqrcode', async (req, res) => {
+  try {
+    const { value, nome, telefone, productTitle, productDescription } = req.body;
+    if (!value || !nome || !telefone) {
+      return res.status(400).json({ error: "Os campos 'value', 'nome' e 'telefone' são obrigatórios." });
+    }
+    
+    // (Aqui pode vir a lógica de limitação de transações, se necessário)
+
+    const url = "https://api.pushinpay.com.br/api/pix/cashIn";
+    const headers = {
+      "Authorization": "Bearer 19791|u8GA1xGVUbQudFT1kGIUtJ0CVVmjjJsFggskj2ZXd717d62d",
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    };
+    const payload = {
+      value,
+      webhook_url: "http://teste.com"
+    };
+    const response = await axios.post(url, payload, { headers });
+    const data = response.data;
+    
+    const descricao = (productTitle && productDescription)
+      ? `${productTitle} - ${productDescription} por R$${(value / 100).toFixed(2)}`
+      : `Compra de ${nome} - Café (1kg) por R$${(value / 100).toFixed(2)}`;
+    
+    // Cria o registro no histórico com status "Gerado" e checkCount padrão (0)
+    const historyRecord = await PurchaseHistory.create({ nome, telefone, transactionId: data.id, status: 'Gerado' });
+    
+    // Agenda a primeira verificação para esse registro
+    scheduleCheck(historyRecord);
+    
+    const resultado = {
+      id: data.id,
+      qr_code: data.qr_code,
+      qr_code_base64: data.qr_code_base64,
+      descricao
+    };
+    console.log("QR Code gerado:", resultado);
+    res.json(resultado);
+  } catch (error) {
+    console.error("Erro ao gerar QR code:", error.message);
+    res.status(500).json({ error: "Erro ao gerar QR code" });
+  }
+});
